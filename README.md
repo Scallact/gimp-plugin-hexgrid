@@ -15,6 +15,12 @@ center and the middle of a face. The user interface presents a more understandab
 Please note that the hexagons "width" can be horizontal or vertical, depending on the 
 orientation selected.
 
+Installation:
+
+Extract the .zip file and place the **pl_hexgrid folder** inside your user profile's Plug-ins 
+folder.
+You can find the plugin at Filters > Render > Pattern
+
 
 Parameters :
 
