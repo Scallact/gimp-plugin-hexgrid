@@ -15,6 +15,14 @@ center and the middle of a face. The user interface presents a more understandab
 Please note that the hexagons "width" can be horizontal or vertical, depending on the 
 orientation selected.
 
+## Output
+
+### Sample grid with quality indicators
+<img width="660" height="660" alt="Sample_grid_20_to_60" src="https://github.com/user-attachments/assets/2d6516ec-5b7a-44c6-b665-4bddcdd328fa" />
+
+### Hexagonal grid
+<img width="660" height="440" alt="Hexagonal_grid_30" src="https://github.com/user-attachments/assets/a4f219a1-3e7f-4815-8afe-8ccf094a937d" />
+
 ## Installation:
 
 Extract the .zip file and place the **pl_hexgrid folder** inside your user profile's Plug-ins 
@@ -23,7 +31,7 @@ folder. If your OS is Linux or Mac, set the pl_hexgrid.py file executable.
 You can find the plugin entry at **Filters > Render > Pattern > Hexagonal grid ...**
 
 
-### Parameters :
+## Parameters :
 
 - The plugin comes with a search function for the best fit in a given size interval, 
   selected by "*quality*" (see below). To choose a specific width, simply enter "0" in the
@@ -42,7 +50,7 @@ You can find the plugin entry at **Filters > Render > Pattern > Hexagonal grid .
 - To extend the hexagonal grid past the layer's boundaries, simply enter negative **margins**. 
 
 
-### Some future improvements are planned:
+## Some future improvements are planned:
 
   - Allow finer granularity at the half-pixel level for the search of the best grid.
    This will relax the Y axis symmetry constraint, without significant loss of 
@@ -51,3 +59,6 @@ You can find the plugin entry at **Filters > Render > Pattern > Hexagonal grid .
    stroke width, but the illusion is there at all scales and the edges must
    subtly become thicker near the node to appear correct to the eye.
 
+## Translations
+
+The plugin's dialog translations are enabled. Currently only english (by default) and french are available. If you want to contribute to translations in other languages, you're welcome to open a ticket, and attach the .po file if possible.
