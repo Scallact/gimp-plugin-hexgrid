@@ -1,0 +1,169 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2025-12-06 18:57+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: pl_hexgrid.py:165
+msgid "Hexagonal grid..."
+msgstr ""
+
+#: pl_hexgrid.py:169 pl_hexgrid.py:170
+msgid "Creates an optimized hexagonal grid as a path. Stroking the path is optional."
+msgstr ""
+
+#: pl_hexgrid.py:177
+msgid "Hexagonal grid"
+msgstr ""
+
+#: pl_hexgrid.py:178
+msgid "Samples sheet"
+msgstr ""
+
+#: pl_hexgrid.py:179
+msgid "Choose what to draw"
+msgstr ""
+
+#: pl_hexgrid.py:179
+msgid "Output"
+msgstr ""
+
+#: pl_hexgrid.py:181
+msgid "Samples count (for samples sheet)"
+msgstr ""
+
+#: pl_hexgrid.py:182
+msgid "Number of samples on the sample sheet"
+msgstr ""
+
+#: pl_hexgrid.py:185
+msgid "Horizontal"
+msgstr ""
+
+#: pl_hexgrid.py:186
+msgid "Vertical"
+msgstr ""
+
+#: pl_hexgrid.py:187
+msgid "Orientation"
+msgstr ""
+
+#: pl_hexgrid.py:189
+msgid "Minimal hexagon width (px)"
+msgstr ""
+
+#: pl_hexgrid.py:190
+msgid "Lower bound of search range for best quality"
+msgstr ""
+
+#: pl_hexgrid.py:192
+msgid "Maximal hexagon width (px)"
+msgstr ""
+
+#: pl_hexgrid.py:193
+msgid "Upper bound, set to 0 for specific width"
+msgstr ""
+
+#: pl_hexgrid.py:195
+msgid "Stroke width (px)"
+msgstr ""
+
+#: pl_hexgrid.py:196
+msgid "Stroke width. If uneven, the path will be offset by half a pixel"
+msgstr ""
+
+#: pl_hexgrid.py:198
+msgid "Vertical margins (px)"
+msgstr ""
+
+#: pl_hexgrid.py:199
+msgid "Minimal vertical margins"
+msgstr ""
+
+#: pl_hexgrid.py:201
+msgid "Horizontal margins (px)"
+msgstr ""
+
+#: pl_hexgrid.py:202
+msgid "Minimal horizontal margins"
+msgstr ""
+
+#: pl_hexgrid.py:204
+msgid "Create a new layer"
+msgstr ""
+
+#: pl_hexgrid.py:205
+msgid "Create a new layer - always active for samples sheet"
+msgstr ""
+
+#: pl_hexgrid.py:206
+msgid "Stroke the path"
+msgstr ""
+
+#: pl_hexgrid.py:207
+msgid "Stroke the path - always active for samples sheet"
+msgstr ""
+
+#: pl_hexgrid.py:209
+msgid "Foreground color"
+msgstr ""
+
+#: pl_hexgrid.py:210
+msgid "Black"
+msgstr ""
+
+#: pl_hexgrid.py:211
+msgid "Color"
+msgstr ""
+
+#: pl_hexgrid.py:213 pl_hexgrid.py:214
+msgid "Keep the path (hexagonal grid)"
+msgstr ""
+
+#: pl_hexgrid.py:215
+msgid "Adjust image grid (hexagonal grid)"
+msgstr ""
+
+#: pl_hexgrid.py:216
+msgid "Adjust the image grid to coincide with the center of hexagons"
+msgstr ""
+
+#: pl_hexgrid.py:274
+msgid "Procedure '{}' only works with one drawable."
+msgstr ""
+
+#: pl_hexgrid.py:685 pl_hexgrid.py:695
+msgid "Wdth:"
+msgstr ""
+
+#: pl_hexgrid.py:686 pl_hexgrid.py:696
+msgid " Qual:"
+msgstr ""
+
+#: pl_hexgrid.py:688 pl_hexgrid.py:698
+msgid " Grid:"
+msgstr ""
+
+#: pl_hexgrid.py:942
+msgid "width  :"
+msgstr ""
+
+#: pl_hexgrid.py:943
+msgid "stretch:"
+msgstr ""
+
+#: pl_hexgrid.py:944
+msgid "quality:"
+msgstr ""
+
