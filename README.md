@@ -10,7 +10,7 @@ As no perfect fit exists between a square grid (pixels) and an hexagonal one, he
 proportions are slightly stretched. The amount of deformation depends on their size. 
 The working size factor of the plugin is the apothem, i.e. the distance between the 
 center and the middle of a face. The user interface presents a more understandable 
-"width" parameter, a measure of the distance between two faces.
+"**width**" parameter, a measure of the distance between two faces.
 
 Please note that the hexagons "width" can be horizontal or vertical, depending on the 
 orientation selected.
