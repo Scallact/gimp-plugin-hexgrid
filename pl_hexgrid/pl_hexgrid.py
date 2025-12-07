@@ -4,8 +4,8 @@
 # GIMP plugin for creation of hexagonal grids, with a "best fit" search
 # algorithm within a size interval, for optimal rasterization.
 #
-# Original author : Pascal L.
-# Version 0.14 for GIMP 3.0 and (probably) later
+# Original author : Pascal Lachat
+# Version 0.15 for GIMP 3.0 and (probably) later
 
 
 # License: GPLv3
@@ -86,6 +86,8 @@ be a nice thing to do in the future.
 
 # Changelog:
 # ---------
+# 0.15
+    # Internationalization enabled, fr language added
 # 0.14
     # layer dimensions and offsets taken into account when drawing on the current layer
     # added basic menu select for color
@@ -110,7 +112,7 @@ be a nice thing to do in the future.
     # recreated user dialog and parameters with the new api
 # 0.9
     # converted to GIMP 3.0 api
-
+    # changed registration and UI registration names
 
 # To do:
 # -----
@@ -134,16 +136,25 @@ from gi.repository import GLib
 
 import os
 import sys
+import gettext
 #-------------------
 import math
 #-------------------
 
+LOCALE_DIR = os.path.join(os.path.dirname(__file__), "locale")
+gettext.bindtextdomain("pl_hexgrid", LOCALE_DIR)
+gettext.textdomain("pl_hexgrid")
+_ = gettext.gettext
 
 class hexaGrid (Gimp.PlugIn):
+    
     ## GimpPlugIn virtual methods ##
     def do_query_procedures(self):
-        return [ "python-fu-pl-hexgrid" ]
+        return [ "pl-hexgrid" ]
 
+    def do_set_i18n(self, name):
+        return True
+    
     def do_create_procedure(self, name):
         procedure = Gimp.ImageProcedure.new(self, name,
                                             Gimp.PDBProcType.PLUGIN,
@@ -151,58 +162,58 @@ class hexaGrid (Gimp.PlugIn):
 
         procedure.set_image_types("*")
         
-        procedure.set_menu_label("Hexagonal grid...")
+        procedure.set_menu_label(_("Hexagonal grid..."))
         procedure.set_icon_name(GimpUi.ICON_GEGL)
         procedure.add_menu_path('<Image>/Filters/Render/Pattern')
 
-        procedure.set_documentation("Creates an optimized hexagonal grid as a path. Stroking the path is optional.",
-                                    "Creates an optimized hexagonal grid as a path. Stroking the path is optional.",
+        procedure.set_documentation(_("Creates an optimized hexagonal grid as a path. Stroking the path is optional."),
+                                    _("Creates an optimized hexagonal grid as a path. Stroking the path is optional."),
                                     name)
         procedure.set_attribution("Pascal L.", "Pascal L.", "2025")
 
         # Boite de dialogue
         #-------------------
         choice1 = Gimp.Choice.new()
-        choice1.add(                    "make hexgrid", 0, "Hexagonal grid", "")
-        choice1.add(                    "make samples", 1, "Samples sheet", "")
-        procedure.add_choice_argument(  "createSamplesChoice", "Output", "Choose what to draw",
+        choice1.add(                    "make hexgrid", 0, _("Hexagonal grid"), "")
+        choice1.add(                    "make samples", 1, _("Samples sheet"), "")
+        procedure.add_choice_argument(  "createSamplesChoice", _("Output"), _("Choose what to draw"),
                                         choice1, "make hexgrid", GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "sampleCount", "Samples count (for samples sheet)",
-                                        "Number of samples on the sample sheet",
+        procedure.add_int_argument(     "sampleCount", _("Samples count (for samples sheet)"),
+                                        _("Number of samples on the sample sheet"),
                                         1, 25, 6, GObject.ParamFlags.READWRITE)
         choice2 = Gimp.Choice.new()
-        choice2.add(                    "horizontal", 0, "Horizontal", "")
-        choice2.add(                    "vertical", 1, "Vertical", "")
-        procedure.add_choice_argument(  "orientation", "Orientation", "Orientation",
+        choice2.add(                    "horizontal", 0, _("Horizontal"), "")
+        choice2.add(                    "vertical", 1, _("Vertical"), "")
+        procedure.add_choice_argument(  "orientation", _("Orientation"), _("Orientation"),
                                         choice2, "horizontal", GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "lowerWidth", "Minimal hexagon width (px)",
-                                        "Lower bound of search range for best quality",
+        procedure.add_int_argument(     "lowerWidth", _("Minimal hexagon width (px)"),
+                                        _("Lower bound of search range for best quality"),
                                         4, 10000, 30, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "upperWidth", "Maximal hexagon width (px)",
-                                        "Upper bound, set to 0 for specific width",
+        procedure.add_int_argument(     "upperWidth", _("Maximal hexagon width (px)"),
+                                        _("Upper bound, set to 0 for specific width"),
                                         0, 10000, 90, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "strokeWidth", "Stroke width (px)",
-                                        "Stroke width. If uneven, the path will be offset by half a pixel",
+        procedure.add_int_argument(     "strokeWidth", _("Stroke width (px)"),
+                                        _("Stroke width. If uneven, the path will be offset by half a pixel"),
                                         1, 50, 2, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "marginXprime", "Vertical margins (px)",
-                                        "Minimal vertical margins",
+        procedure.add_int_argument(     "marginXprime", _("Vertical margins (px)"),
+                                        _("Minimal vertical margins"),
                                         -500, 1000, 0, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "marginYprime", "Horizontal margins (px)",
-                                        "Minimal horizontal margins",
+        procedure.add_int_argument(     "marginYprime", _("Horizontal margins (px)"),
+                                        _("Minimal horizontal margins"),
                                         -500, 1000, 0, GObject.ParamFlags.READWRITE)
-        procedure.add_boolean_argument( "createLayer", "Create a new layer",
-                                        "Create a new layer - always active for samples sheet", True, GObject.ParamFlags.READWRITE)
-        procedure.add_boolean_argument( "strokePath", "Stroke the path",
-                                        "Stroke the path - always active for samples sheet", True, GObject.ParamFlags.READWRITE)
+        procedure.add_boolean_argument( "createLayer", _("Create a new layer"),
+                                        _("Create a new layer - always active for samples sheet"), True, GObject.ParamFlags.READWRITE)
+        procedure.add_boolean_argument( "strokePath", _("Stroke the path"),
+                                        _("Stroke the path - always active for samples sheet"), True, GObject.ParamFlags.READWRITE)
         choice3 = Gimp.Choice.new()
-        choice3.add(                    "foreground", 0, "Foreground color", "")
-        choice3.add(                    "black", 1, "Black", "")
-        procedure.add_choice_argument(  "selectedColor", "Color", "Color",
+        choice3.add(                    "foreground", 0, _("Foreground color"), "")
+        choice3.add(                    "black", 1, _("Black"), "")
+        procedure.add_choice_argument(  "selectedColor", _("Color"), _("Color"),
                                         choice3, "black", GObject.ParamFlags.READWRITE)
-        procedure.add_boolean_argument( "keepPaths", "Keep the path (hexagonal grid only)",
-                                        "Keep the path (hexagonal grid only)", False, GObject.ParamFlags.READWRITE)
-        procedure.add_boolean_argument( "adjustGrid", "Adjust image grid (hexagonal grid only)",
-                                        "Adjust the image grid to coincide with the center of hexagons", 
+        procedure.add_boolean_argument( "keepPaths", _("Keep the path (hexagonal grid)"),
+                                        _("Keep the path (hexagonal grid)"), False, GObject.ParamFlags.READWRITE)
+        procedure.add_boolean_argument( "adjustGrid", _("Adjust image grid (hexagonal grid)"),
+                                        _("Adjust the image grid to coincide with the center of hexagons"), 
                                         False, GObject.ParamFlags.READWRITE)
 
 
@@ -222,7 +233,7 @@ class hexaGrid (Gimp.PlugIn):
         
         # boite de dialogue-----------------------------------------------------------
         if run_mode == Gimp.RunMode.INTERACTIVE:
-            GimpUi.init('python-fu-pl-hexgrid')
+            GimpUi.init('pl_hexgrid') # file name
 
             dialog = GimpUi.ProcedureDialog(procedure=procedure, config=config)
             dialog.fill(None)
@@ -671,20 +682,20 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
     if direction == 'horizontal' :
             
             vectorName = (
-                    "Wdth:" + str( int(2 * apothem) ) +
-                    " Qual:" + str( int(round(quality)) ) +
+                    _("Wdth:") + str( int(2 * apothem) ) +
+                    _(" Qual:") + str( int(round(quality)) ) +
                     "/" + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%" +
-                    " Grid:" + str( int(apothem) ) + "x" + str( int(separation) ) 
+                    _(" Grid:") + str( int(apothem) ) + "x" + str( int(separation) ) 
                     # " R:" + str( int(round(radius)) ) # removed
                     )
                     
     else :
             
             vectorName = (
-                    "Wdth:" + str( int(2 * apothem) ) +
-                    " Qual:" + str( int(round(quality)) ) +
+                    _("Wdth:") + str( int(2 * apothem) ) +
+                    _(" Qual:") + str( int(round(quality)) ) +
                     "/" + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%" +
-                    " Grid:" + str( int(separation) ) + "x" + str( int(apothem) ) 
+                    _(" Grid:") + str( int(separation) ) + "x" + str( int(apothem) ) 
                     # " R:" + str( int(round(radius)) ) # removed
                     )
     
@@ -928,9 +939,9 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
     if isSample == True :
             
         sampleText = (
-                    "width  :" + str( int(2 * apothem) ) + "\n"
-                    "stretch:" + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%\n"
-                    "quality:" + str( int(round(quality)) ) 
+                    _("width  :") + str( int(2 * apothem) ) + "\n" +
+                    _("stretch:") + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%\n" +
+                    _("quality:") + str( int(round(quality)) ) 
                     )
         
         # configure text layer
