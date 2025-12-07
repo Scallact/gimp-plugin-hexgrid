@@ -1,6 +1,6 @@
 
-Hexagonal grid
-**************
+# Hexagonal grid for GIMP 3
+***************************
 
 This GIMP plugin aims to draw regular hexagonal grids that fit the pixel grid as perfectly 
 as possible, avoiding some common artefact like blurred vertical or horizontal lines. This 
@@ -15,33 +15,34 @@ center and the middle of a face. The user interface presents a more understandab
 Please note that the hexagons "width" can be horizontal or vertical, depending on the 
 orientation selected.
 
-Installation:
+## Installation:
 
 Extract the .zip file and place the **pl_hexgrid folder** inside your user profile's Plug-ins 
-folder.
-You can find the plugin at Filters > Render > Pattern
+folder. If your OS is Linux or Mac, set the pl_hexgrid.py file executable.
+
+You can find the plugin entry at **Filters > Render > Pattern > Hexagonal grid ...**
 
 
-Parameters :
+### Parameters :
 
 - The plugin comes with a search function for the best fit in a given size interval, 
-  selected by "quality" (see below). To choose a specific width, simply enter "0" in the
+  selected by "*quality*" (see below). To choose a specific width, simply enter "0" in the
   "Maximal hexagon width" field.
-- Choose "Sample sheet" at the "Output" drop-down menu to create a sheet with multiple 
+- Choose "**Sample sheet**" at the "Output" drop-down menu to create a sheet with multiple 
   grid samples, selected by quality, in a nice tabular format. Width, quality and 
   stretch (%) are displayed on each sample.
-- The "quality" output parameter explicits the number of contiguous hexagons that reach 
+- The "*quality*" output parameter explicits the number of contiguous hexagons that reach 
   a mis-alignment of one pixel between the actual and ideal grids.
-- If "Create a new layer" or "Keep the path" are checked, the name of the layer and/or 
+- If "**Create a new layer**" or "**Keep the path**" are checked, the name of the layer and/or 
   path will display the hexagon width, quality, and the size of the corresponding image 
   grid (width x height).
 - The image grid can be automatically set by the plugin. 
-- When an odd "Stroke width" is entered, the plugin will shift the hexagonal and image 
+- When an odd "**Stroke width**" is entered, the plugin will shift the hexagonal and image 
   grids by half a pixel for best stroke quality.
-- To extend the hexagonal grid past the layer's boundaries, simply enter negative margins. 
+- To extend the hexagonal grid past the layer's boundaries, simply enter negative **margins**. 
 
 
-Some future improvements are planned:
+### Some future improvements are planned:
 
   - Allow finer granularity at the half-pixel level for the search of the best grid.
    This will relax the Y axis symmetry constraint, without significant loss of 
