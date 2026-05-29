@@ -15,13 +15,17 @@ figure_01
 
 ## Parameters :
 
-### Output
-
-* Hexagonal grid: main purpose of the plugin, fill a layer with an hexagonal grid.
-* Sample sheet: Create an image sized layer, filled with small rectangular grid samples, 
-each with its descriptive parameters. Useful for comparing and chosing the right size or precision
-for your purpose.
-    
+* **Output**
+    * Hexagonal grid: main purpose of the plugin, fill a layer with an hexagonal grid.
+    * Sample sheet: Create an image sized layer, filled with small rectangular grid samples, 
+    each with its descriptive parameters. Useful for comparing and chosing the right size or precision
+    for your purpose.
+        * Samples count: how many samples to create, with incremental dimensions distributed around 
+        the "Size" parameter. 
+* **Size parameter**: Which dimension is used to build hexagons. See fig. 3.
+    * Width: distance between two edges. 
+    * Apothem: shortest distance from the center to an edge. Half the width.
+    * Radius, edge: the radius of the circumscribed circle, which is also the size of an edge.
 
 ## Installation:
 
