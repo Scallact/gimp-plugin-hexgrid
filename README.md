@@ -13,21 +13,35 @@ proportions are slightly stretched when this option is active.
 
 figure_01
 
-## Parameters :
+## Parameters
 
-* **Output**
-    * Hexagonal grid: main purpose of the plugin, fill a layer with an hexagonal grid.
-    * Sample sheet: Create an image sized layer, filled with small rectangular grid samples, 
-      each with its descriptive parameters. Useful for comparing and chosing the right size or precision
-      for your purpose.
-* **Samples count**: how many samples to create, with incremental dimensions distributed around 
-  the "Size" parameter. 
-* **Size parameter**: Which dimension is used to build hexagons. See fig. 3.
-    * Width: distance between two edges. 
-    * Apothem: shortest distance from the center to an edge. Half the width.
-    * Radius, edge: the radius of the circumscribed circle, which is also the size of an edge.
-    * Line spacing: the distance between rows or columns of adjacent hexagons. Along with the apothem, 
-      sets the dimensions of the underlying grid.
+### Output:
+
+* Hexagonal grid: main purpose of the plugin, fill a layer with an hexagonal grid.
+* Sample sheet: Create an image sized layer, filled with small rectangular grid samples, 
+   each with its descriptive parameters. Useful for comparing and chosing the right size or precision
+   for your purpose.
+   
+### Samples count: 
+
+How many samples to create, with incremental dimensions distributed around 
+the "Size" parameter. 
+
+### **Size parameter**:
+
+Which dimension is used to build hexagons. See fig. 3.
+
+* Width: distance between two edges. 
+* Apothem: shortest distance from the center to an edge. Half the width.
+* Radius, edge: the radius of the circumscribed circle, which is also the size of an edge.
+* Line spacing: the distance between rows or columns of adjacent hexagons. Along with the apothem, 
+  sets the dimensions of the underlying grid.
+
+### Size
+
+Set dimension for the chosen size parameter. For sample sheets, sets the start for the search of 
+above and below sizes.
+
 
 ## Installation:
 
