@@ -39,8 +39,22 @@ Which dimension is used to build hexagons. See fig. 3.
 
 ### Size
 
-Set dimension for the chosen size parameter. For sample sheets, sets the start for the search of 
-above and below sizes.
+Set dimension for the chosen size parameter. For sample sheets, sets the middle of the interval, or the start
+for the search of bigger and smaller sizes.
+
+### Snap centers to pixels:
+
+Slightly stretches the grid to ensure that the hexagons centers fit align exactly with the pixel grid. 
+The stretch applies vertically for horizontal grids and horizontally for vertical grids. This is useful 
+in many cases, for example if you need to align some stamps perfectly, or to draw geometric diagrams 
+without the headaches of inter-pixels alignments.
+
+*Notes*:
+
+* If an odd stroke width is entered (see below), the centers snap at the middle of pixels. If it's even, 
+  they snap at the pixels corners.
+* Snap "on" was the default and only possible behaviour of previous versions, up to 0.15.
+* This option doesn't guarantee that all *vertices* snap to the pixels.
 
 
 ## Installation:
