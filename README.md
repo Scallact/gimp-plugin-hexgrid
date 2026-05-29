@@ -106,13 +106,36 @@ create a new layer empty named with the parameters values.
 
 ### Stroke width:
 
+Self explanatory.
+
+*Note:* If an odd number is entered, the whole grid is displaced by half a pixel to avoid rasterization blur.
+
 ### Stroke color:
+
+*Foreground color* or *Black*
+
+*Note:* the foreground color can still be selected while the plugin's dialog is open.
 
 ### Keep the path:
 
+*Irrelevant with sample sheet*
+
+Keep the path if needed for further use, like stroke option not provided by the plugin.
+
 ### Adjust image grid:
 
-### Output advance parameters
+*Irrelevant with sample sheet*
+
+Configure the image grid to fit the centers of hexagons, and highlight the underlying rectangular grid. 
+The user still has to activate grid visibility and snap options in GIMP's menus.
+
+### Output advances parameters
+
+Outputs a few more parameters in layers name (if "Create a new layer" is checked), or in sample sheet 
+overlay text. See "Outputs" below for more details.
+
+## Outputs
+
 
 ## Installation:
 
@@ -121,15 +144,8 @@ folder. If your OS is Linux or Mac, set the pl_hexgrid.py file executable.
 
 You can find the plugin entry at **Filters > Render > Pattern > Hexagonal grid ...**
 
-## Some future improvements are planned:
-
-  - Allow finer granularity at the half-pixel level for the search of the best grid.
-   This will relax the Y axis symmetry constraint, without significant loss of 
-   visual quality.
-  - Optical correction at nodes, where 3 edges meet. Very much needed for large 
-   stroke width, but the illusion is there at all scales and the edges must
-   subtly become thicker near the node to appear correct to the eye.
-
 ## Translations
 
-The plugin's dialog translations are enabled. Currently only english (by default) and french are available. If you want to contribute to translations in other languages, you're welcome to open a ticket, and attach the .po file if possible.
+Translations are enabled. Currently, english (by default), german and french are 
+available. If you want to contribute to translations in other languages, you're welcome to open a ticket, 
+and attach the .po file if possible.
