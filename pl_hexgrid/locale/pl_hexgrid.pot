@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-12-06 18:57+0100\n"
+"POT-Creation-Date: 2026-05-25 18:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,155 +15,239 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: pl_hexgrid.py:165
+#: pl_hexgrid.py:120
 msgid "Hexagonal grid..."
 msgstr ""
 
-#: pl_hexgrid.py:169 pl_hexgrid.py:170
+#: pl_hexgrid.py:124 pl_hexgrid.py:125
 msgid "Creates an optimized hexagonal grid as a path. Stroking the path is optional."
 msgstr ""
 
-#: pl_hexgrid.py:177
+#: pl_hexgrid.py:132
 msgid "Hexagonal grid"
 msgstr ""
 
-#: pl_hexgrid.py:178
+#: pl_hexgrid.py:133
 msgid "Samples sheet"
 msgstr ""
 
-#: pl_hexgrid.py:179
+#: pl_hexgrid.py:134
 msgid "Choose what to draw"
 msgstr ""
 
-#: pl_hexgrid.py:179
+#: pl_hexgrid.py:134
 msgid "Output"
 msgstr ""
 
-#: pl_hexgrid.py:181
-msgid "Samples count (for samples sheet)"
+#: pl_hexgrid.py:136
+msgid "\t\tSamples count"
 msgstr ""
 
-#: pl_hexgrid.py:182
+#: pl_hexgrid.py:137
 msgid "Number of samples on the sample sheet"
 msgstr ""
 
-#: pl_hexgrid.py:185
+#: pl_hexgrid.py:140
+msgid "Width"
+msgstr ""
+
+#: pl_hexgrid.py:141
+msgid "Apothem"
+msgstr ""
+
+#: pl_hexgrid.py:142
+msgid "Radius, edge (approx.)"
+msgstr ""
+
+#: pl_hexgrid.py:143
+msgid "Lines spacing (approx.)"
+msgstr ""
+
+#: pl_hexgrid.py:144
+msgid "Size parameter"
+msgstr ""
+
+#: pl_hexgrid.py:145
+msgid "Choose what the \"Size\" parameter represents. Apothem is half the width"
+msgstr ""
+
+#: pl_hexgrid.py:147
+msgid "\t\tSize (px)"
+msgstr ""
+
+#: pl_hexgrid.py:148
+msgid "Hexagon defining size"
+msgstr ""
+
+#: pl_hexgrid.py:150
+msgid "Snap centers to pixels"
+msgstr ""
+
+#: pl_hexgrid.py:151
+msgid "Stretch or compress slightly to snap hexagon centers to pixels"
+msgstr ""
+
+#: pl_hexgrid.py:153
+msgid "\tFilter by accuracy"
+msgstr ""
+
+#: pl_hexgrid.py:154
+msgid "Only output grids with sufficient snap accuracy"
+msgstr ""
+
+#: pl_hexgrid.py:156
+msgid "\t\tSnap accuracy"
+msgstr ""
+
+#: pl_hexgrid.py:157
+msgid "How much snap distortion tolerated, expressed as fraction of 1 pixel"
+msgstr ""
+
+#: pl_hexgrid.py:160
 msgid "Horizontal"
 msgstr ""
 
-#: pl_hexgrid.py:186
+#: pl_hexgrid.py:161
 msgid "Vertical"
 msgstr ""
 
-#: pl_hexgrid.py:187
+#: pl_hexgrid.py:162
 msgid "Orientation"
 msgstr ""
 
-#: pl_hexgrid.py:189
-msgid "Minimal hexagon width (px)"
-msgstr ""
-
-#: pl_hexgrid.py:190
-msgid "Lower bound of search range for best quality"
-msgstr ""
-
-#: pl_hexgrid.py:192
-msgid "Maximal hexagon width (px)"
-msgstr ""
-
-#: pl_hexgrid.py:193
-msgid "Upper bound, set to 0 for specific width"
-msgstr ""
-
-#: pl_hexgrid.py:195
-msgid "Stroke width (px)"
-msgstr ""
-
-#: pl_hexgrid.py:196
-msgid "Stroke width. If uneven, the path will be offset by half a pixel"
-msgstr ""
-
-#: pl_hexgrid.py:198
+#: pl_hexgrid.py:164
 msgid "Vertical margins (px)"
 msgstr ""
 
-#: pl_hexgrid.py:199
+#: pl_hexgrid.py:165
 msgid "Minimal vertical margins"
 msgstr ""
 
-#: pl_hexgrid.py:201
+#: pl_hexgrid.py:167
 msgid "Horizontal margins (px)"
 msgstr ""
 
-#: pl_hexgrid.py:202
+#: pl_hexgrid.py:168
 msgid "Minimal horizontal margins"
 msgstr ""
 
-#: pl_hexgrid.py:204
+#: pl_hexgrid.py:170
 msgid "Create a new layer"
 msgstr ""
 
-#: pl_hexgrid.py:205
+#: pl_hexgrid.py:171
 msgid "Create a new layer - always active for samples sheet"
 msgstr ""
 
-#: pl_hexgrid.py:206
+#: pl_hexgrid.py:173
 msgid "Stroke the path"
 msgstr ""
 
-#: pl_hexgrid.py:207
+#: pl_hexgrid.py:174
 msgid "Stroke the path - always active for samples sheet"
 msgstr ""
 
-#: pl_hexgrid.py:209
+#: pl_hexgrid.py:176
+msgid "\tStroke width (px)"
+msgstr ""
+
+#: pl_hexgrid.py:177
+msgid "Stroke width. If uneven, the path will be offset by a half-pixel"
+msgstr ""
+
+#: pl_hexgrid.py:180
 msgid "Foreground color"
 msgstr ""
 
-#: pl_hexgrid.py:210
+#: pl_hexgrid.py:181
 msgid "Black"
 msgstr ""
 
-#: pl_hexgrid.py:211
+#: pl_hexgrid.py:182
+msgid "\tStroke color:"
+msgstr ""
+
+#: pl_hexgrid.py:182
 msgid "Color"
 msgstr ""
 
-#: pl_hexgrid.py:213 pl_hexgrid.py:214
-msgid "Keep the path (hexagonal grid)"
+#: pl_hexgrid.py:184
+msgid "Keep the path"
 msgstr ""
 
-#: pl_hexgrid.py:215
-msgid "Adjust image grid (hexagonal grid)"
+#: pl_hexgrid.py:185
+msgid "Keep the path (hexagonal grid only)"
 msgstr ""
 
-#: pl_hexgrid.py:216
-msgid "Adjust the image grid to coincide with the center of hexagons"
+#: pl_hexgrid.py:187
+msgid "Adjust image grid"
 msgstr ""
 
-#: pl_hexgrid.py:274
+#: pl_hexgrid.py:188
+msgid "Adjust the image grid to coincide with the center of hexagons (hexagonal grid only)"
+msgstr ""
+
+#: pl_hexgrid.py:190
+msgid "Output advanced parameters"
+msgstr ""
+
+#: pl_hexgrid.py:191
+msgid "Output more parameters in layers name and sample text"
+msgstr ""
+
+#: pl_hexgrid.py:252
 msgid "Procedure '{}' only works with one drawable."
 msgstr ""
 
-#: pl_hexgrid.py:685 pl_hexgrid.py:695
-msgid "Wdth:"
+#: pl_hexgrid.py:824 pl_hexgrid.py:833 pl_hexgrid.py:858 pl_hexgrid.py:865
+msgid "W:"
 msgstr ""
 
-#: pl_hexgrid.py:686 pl_hexgrid.py:696
-msgid " Qual:"
+#: pl_hexgrid.py:825 pl_hexgrid.py:834 pl_hexgrid.py:859 pl_hexgrid.py:866
+msgid " grid:"
 msgstr ""
 
-#: pl_hexgrid.py:688 pl_hexgrid.py:698
-msgid " Grid:"
+#: pl_hexgrid.py:826 pl_hexgrid.py:835
+msgid " accur:"
 msgstr ""
 
-#: pl_hexgrid.py:942
-msgid "width  :"
+#: pl_hexgrid.py:827
+msgid " str:"
 msgstr ""
 
-#: pl_hexgrid.py:943
-msgid "stretch:"
+#: pl_hexgrid.py:829 pl_hexgrid.py:861
+msgid " count:"
 msgstr ""
 
-#: pl_hexgrid.py:944
-msgid "quality:"
+#: pl_hexgrid.py:860
+msgid " radius:"
+msgstr ""
+
+#: pl_hexgrid.py:1110
+msgid "v stretch:"
+msgstr ""
+
+#: pl_hexgrid.py:1116
+msgid "h stretch:"
+msgstr ""
+
+#: pl_hexgrid.py:1122
+msgid " width/apo: "
+msgstr ""
+
+#: pl_hexgrid.py:1129 pl_hexgrid.py:1139 pl_hexgrid.py:1148 pl_hexgrid.py:1156
+msgid " spacing  : "
+msgstr ""
+
+#: pl_hexgrid.py:1132 pl_hexgrid.py:1140
+msgid " accuracy : "
+msgstr ""
+
+#: pl_hexgrid.py:1133 pl_hexgrid.py:1150
+msgid " count    : "
+msgstr ""
+
+#: pl_hexgrid.py:1149
+msgid " radius   : "
 msgstr ""
 
