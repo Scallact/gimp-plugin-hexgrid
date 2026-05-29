@@ -5,7 +5,7 @@
 # algorithm within a size interval, for optimal rasterization.
 #
 # Original author : Pascal Lachat
-# Version 0.15 for GIMP 3.0 and (probably) later
+# Version 0.16 for GIMP 3.0 and (probably) later
 
 
 # License: GPLv3
@@ -23,69 +23,28 @@
 # visit: http://www.gnu.org/licenses/gpl.html
 
 
-"""
 
-Hexagonal grid
-**************
-
-This GIMP plugin aims to draw regular hexagonal grids that fit the pixel grid as perfectly 
-as possible, avoiding some common artefact like blurred vertical or horizontal lines. This 
-optimisation also ensures that each hexagon is exactly the same and symmetrical.
-
-As no perfect fit exists between a square grid (pixels) and an hexagonal one, hexagons' 
-proportions are slightly stretched. The amount of deformation depends on their size. 
-The working size factor of the plugin is the apothem, i.e. the distance between the 
-center and the middle of a face. The user interface presents a more understandable 
-"width" parameter, a measure of the distance between two faces.
-
-Please note that the hexagons "width" can be horizontal or vertical, depending on the 
-orientation selected.
-
-
-Parameters :
-
-- The plugin comes with a search function for the best fit in a given size interval, 
-  selected by "quality" (see below). To choose a specific width, simply enter "0" in the
-  "Maximal hexagon width" field.
-- Choose "Sample sheet" at the "Output" drop-down menu to create a sheet with multiple 
-  grid samples, selected by quality, in a nice tabular format. Width, quality and 
-  stretch (%) are displayed on each sample.
-- The "quality" output parameter explicits the number of contiguous hexagons that reach 
-  a mis-alignment of one pixel between the actual and ideal grids.
-- If "Create a new layer" or "Keep the path" are checked, the name of the layer and/or 
-  path will display the hexagon width, quality, and the size of the corresponding image 
-  grid (width x height).
-- The image grid can be automatically set by the plugin. 
-- When an odd "Stroke width" is entered, the plugin will shift the hexagonal and image 
-  grids by half a pixel for best stroke quality.
-- To extend the hexagonal grid past the layer's boundaries, simply enter negative margins. 
-
-
-Some future improvements are planned:
-
-  - Allow finer granularity at the half-pixel level for the search of the best grid.
-   This will relax the Y axis symmetry constraint, without significant loss of 
-   visual quality.
-  - Optical correction at nodes, where 3 edges meet. Very much needed for large 
-   stroke width, but the illusion is there at all scales and the edges must
-   subtly become thicker near the node to appear correct to the eye.
-
-
-About the code:
-    
-The variable naming scheme is a bit confusing right now and needs revision, 
-and the logic is not very well thought out. For instance, it didn't occur to me that 
-global variables indeed do exist in Python (!), which use would certainly alleviate 
-the growing list of variables passed to some functions.
-
-Some comments are still in french, translation and uniformisation are not completed 
-yet. Speaking of translation, I don't know how to localize the plugin, that might 
-be a nice thing to do in the future.
-
-"""
 
 # Changelog:
 # ---------
+# 0.16
+    # Renamed "quality" parameter to "accuracy".
+    # Partial rewrite to allow for non-stretched grids, where center of hexagons don't 
+        # land on the pixel grid. Horizontal or vertical faces are still adjusted to the 
+        # pixels. This should make the plugin generally more useful for cases where an 
+        # exact pixel snap is not required. The "Snap centers to pixels" checkbox controls 
+        # this option.
+    # Better output text for samples and layers/paths names.
+    # UI revamped with better parameters visual hierarchy.
+    # Size can now be enter as width, apothem, radius or line spacing
+    # Added option to filter by accuracy.
+    # Interval of search has been replaced by a single size parameter and the accuracy 
+        # filter. If the filter is on, the nearest suitable size(s) is (are) selected.
+    # Option to output advanced parameters, like lines and contiguous hexagons count.
+        # Displayed parameters depend on the "Snap centers to pixels" option.
+    # Samples are now rectangles and make better use of the available space.
+    # More consistant borders widths for samples sheets frames.
+    # Translated the code comments in english.
 # 0.15
     # Internationalization enabled, fr language added
 # 0.14
@@ -116,12 +75,8 @@ be a nice thing to do in the future.
 
 # To do:
 # -----
-# Choix couleur >> OK, basic
-# Examiner le cas avec aucun hexagone possible (hexagonal grid) >> OK
-# Tenir compte des dimensions du calque actuel (seulement pour traçage sur le calque lui-même) >> OK
-# Limites samples count pour image < 280 * 280 (16) et < 220 * 220 (9) >> pas nécessaire >> KO
-# Permettre une granularité plus fine, au demi-pixel, pour la recherche de séparation, avec option utilisateur
-
+# Option for physical units (mm) input (and output?)
+# Maybe: optical correction for hexagon vertices
 
 #-------------------
 import gi
@@ -173,48 +128,68 @@ class hexaGrid (Gimp.PlugIn):
 
         # Boite de dialogue
         #-------------------
-        choice1 = Gimp.Choice.new()
-        choice1.add(                    "make hexgrid", 0, _("Hexagonal grid"), "")
-        choice1.add(                    "make samples", 1, _("Samples sheet"), "")
+        choice = Gimp.Choice.new()
+        choice.add(                     "make hexgrid", 0, _("Hexagonal grid"), "")
+        choice.add(                     "make samples", 1, _("Samples sheet"), "")
         procedure.add_choice_argument(  "createSamplesChoice", _("Output"), _("Choose what to draw"),
-                                        choice1, "make hexgrid", GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "sampleCount", _("Samples count (for samples sheet)"),
+                                        choice, "make hexgrid", GObject.ParamFlags.READWRITE )
+        procedure.add_int_argument(     "sampleCount", _("\t\tSamples count"),
                                         _("Number of samples on the sample sheet"),
-                                        1, 25, 6, GObject.ParamFlags.READWRITE)
-        choice2 = Gimp.Choice.new()
-        choice2.add(                    "horizontal", 0, _("Horizontal"), "")
-        choice2.add(                    "vertical", 1, _("Vertical"), "")
+                                        1, 25, 12, GObject.ParamFlags.READWRITE )
+        choice = Gimp.Choice.new()
+        choice.add(                     "width",         0, _("Width"), "")
+        choice.add(                     "apothem",       1, _("Apothem"), "")
+        choice.add(                     "radius",        2, _("Radius, edge (approx.)"), "")
+        choice.add(                     "lines spacing", 3, _("Lines spacing (approx.)"), "") # fr: interligne
+        procedure.add_choice_argument(  "sizeChoice", _("Size parameter"), 
+                                        _("Choose what the \"Size\" parameter represents. Apothem is half the width"),
+                                        choice, "width", GObject.ParamFlags.READWRITE )
+        procedure.add_int_argument(     "size", _("\t\tSize (px)"),
+                                        _("Hexagon defining size"),
+                                        4, 10000, 50, GObject.ParamFlags.READWRITE )
+        procedure.add_boolean_argument( "allowStretch", _("Snap centers to pixels"), # fit, coincide, correlate, adjust, pin, snap?
+                                        _("Stretch or compress slightly to snap hexagon centers to pixels"), 
+                                        False, GObject.ParamFlags.READWRITE )
+        procedure.add_boolean_argument( "snapFilterOn", _("\tFilter by accuracy"),
+                                        _("Only output grids with sufficient snap accuracy"), 
+                                        False, GObject.ParamFlags.READWRITE )
+        procedure.add_int_argument(     "threshold", _("\t\tSnap accuracy"),
+                                        _("How much snap distortion tolerated, expressed as fraction of 1 pixel"),
+                                        2, 1000, 5, GObject.ParamFlags.READWRITE )
+        choice = Gimp.Choice.new()
+        choice.add(                     "horizontal", 0, _("Horizontal"), "")
+        choice.add(                     "vertical",   1, _("Vertical"), "")
         procedure.add_choice_argument(  "orientation", _("Orientation"), _("Orientation"),
-                                        choice2, "horizontal", GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "lowerWidth", _("Minimal hexagon width (px)"),
-                                        _("Lower bound of search range for best quality"),
-                                        4, 10000, 30, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "upperWidth", _("Maximal hexagon width (px)"),
-                                        _("Upper bound, set to 0 for specific width"),
-                                        0, 10000, 90, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "strokeWidth", _("Stroke width (px)"),
-                                        _("Stroke width. If uneven, the path will be offset by half a pixel"),
-                                        1, 50, 2, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "marginXprime", _("Vertical margins (px)"),
+                                        choice, "horizontal", GObject.ParamFlags.READWRITE )
+        procedure.add_int_argument(     "marginH", _("Vertical margins (px)"),
                                         _("Minimal vertical margins"),
-                                        -500, 1000, 0, GObject.ParamFlags.READWRITE)
-        procedure.add_int_argument(     "marginYprime", _("Horizontal margins (px)"),
+                                        -500, 1000, 0, GObject.ParamFlags.READWRITE )
+        procedure.add_int_argument(     "marginV", _("Horizontal margins (px)"),
                                         _("Minimal horizontal margins"),
-                                        -500, 1000, 0, GObject.ParamFlags.READWRITE)
+                                        -500, 1000, 0, GObject.ParamFlags.READWRITE )
         procedure.add_boolean_argument( "createLayer", _("Create a new layer"),
-                                        _("Create a new layer - always active for samples sheet"), True, GObject.ParamFlags.READWRITE)
+                                        _("Create a new layer - always active for samples sheet"), 
+                                        True, GObject.ParamFlags.READWRITE )
         procedure.add_boolean_argument( "strokePath", _("Stroke the path"),
-                                        _("Stroke the path - always active for samples sheet"), True, GObject.ParamFlags.READWRITE)
-        choice3 = Gimp.Choice.new()
-        choice3.add(                    "foreground", 0, _("Foreground color"), "")
-        choice3.add(                    "black", 1, _("Black"), "")
-        procedure.add_choice_argument(  "selectedColor", _("Color"), _("Color"),
-                                        choice3, "black", GObject.ParamFlags.READWRITE)
-        procedure.add_boolean_argument( "keepPaths", _("Keep the path (hexagonal grid)"),
-                                        _("Keep the path (hexagonal grid)"), False, GObject.ParamFlags.READWRITE)
-        procedure.add_boolean_argument( "adjustGrid", _("Adjust image grid (hexagonal grid)"),
-                                        _("Adjust the image grid to coincide with the center of hexagons"), 
-                                        False, GObject.ParamFlags.READWRITE)
+                                        _("Stroke the path - always active for samples sheet"), 
+                                        True, GObject.ParamFlags.READWRITE )
+        procedure.add_int_argument(     "strokeWidth", _("\tStroke width (px)"),
+                                        _("Stroke width. If odd, the path will be offset by a half-pixel"),
+                                        1, 50, 2, GObject.ParamFlags.READWRITE )
+        choice = Gimp.Choice.new()
+        choice.add(                     "foreground", 0, _("Foreground color"), "")
+        choice.add(                     "black",      1, _("Black"), "")
+        procedure.add_choice_argument(  "selectedColor", _("\tStroke color:"), _("Color"),
+                                        choice, "black", GObject.ParamFlags.READWRITE )
+        procedure.add_boolean_argument( "keepPaths", _("Keep the path"),
+                                        _("Keep the path (hexagonal grid only)"), 
+                                        False, GObject.ParamFlags.READWRITE )
+        procedure.add_boolean_argument( "adjustGrid", _("Adjust image grid"),
+                                        _("Adjust the image grid to coincide with the center of hexagons (hexagonal grid only)"), 
+                                        False, GObject.ParamFlags.READWRITE )
+        procedure.add_boolean_argument( "verbose", _("Output advanced parameters"),
+                                        _("Output more parameters in layers name and sample text"), 
+                                        False, GObject.ParamFlags.READWRITE )
 
 
         return procedure
@@ -228,10 +203,10 @@ class hexaGrid (Gimp.PlugIn):
         
         # All calculation are done with virtual X and Y axes, where those axes are switched 
         # when hexas direction is set to "vertical". Original, unswitched parameters are 
-        # sometimes postfixed with "prime" when further use is needed.
+        # generally postfixed with H and V.
         
         
-        # boite de dialogue-----------------------------------------------------------
+        # dialog -----------------------------------------------------------------
         if run_mode == Gimp.RunMode.INTERACTIVE:
             GimpUi.init('pl_hexgrid') # file name
 
@@ -245,30 +220,33 @@ class hexaGrid (Gimp.PlugIn):
         
         createSamplesChoice = config.get_property('createSamplesChoice')
         sampleCount         = config.get_property('sampleCount')
+        size                = config.get_property('size')
+        sizeChoice          = config.get_property('sizeChoice')
+        allowStretch        = config.get_property('allowStretch')
+        snapFilterOn        = config.get_property('snapFilterOn')
+        threshold           = config.get_property('threshold')
         orientation         = config.get_property('orientation')
-        lowerWidth          = config.get_property('lowerWidth')
-        upperWidth          = config.get_property('upperWidth')
-        strokeWidth         = config.get_property('strokeWidth')
-        marginXprime        = config.get_property('marginXprime')
-        marginYprime        = config.get_property('marginYprime')
+        marginH             = config.get_property('marginH')
+        marginV             = config.get_property('marginV')
         createLayer         = config.get_property('createLayer')
         strokePath          = config.get_property('strokePath')
+        strokeWidth         = config.get_property('strokeWidth')
         selectedColor       = config.get_property('selectedColor')
         keepPaths           = config.get_property('keepPaths')
         adjustGrid          = config.get_property('adjustGrid')
+        verbose             = config.get_property('verbose')
+        
         
         #-----------------------------------------------------------------------------
         
         # dev variables---------------------------------------------------------------
         
-        createHexagons = True       # si False, afficher boite de dialogue?
-        cropLayer = False
-        createSampleImage = False   # créer une autre image ? inutilisé
-        
+        cropLayer           = False   # unused
+        createSampleImage   = False   # create another image? unused
         
         #-----------------------------------------------------------------------------
         
-        # récupération calque actif---------------------------------------------------
+        # get active layer------------------------------------------------------------
         
         if len(drawables) != 1:
             msg = _("Procedure '{}' only works with one drawable.").format(procedure.get_name())
@@ -281,62 +259,60 @@ class hexaGrid (Gimp.PlugIn):
         
         # Initialisations-------------------------------------------------------------
         
+        if createLayer == True or createSamplesChoice == "make samples" :
+            # for some reason, we can't freeze layers if working on the source layer, and make it selected
+            monImage.freeze_layers()
+            monImage.freeze_paths()
+        
         Gimp.context_push()
         fgColor = Gimp.context_get_foreground()
         Gimp.context_set_defaults()
-        monImage.freeze_layers()
-        monImage.freeze_paths()
+        
+        monImage.undo_group_start()
         
         #-----------------------------------------------------------------------------
         
+        trueRatio = math.sqrt(3.0)
+        
         if createSamplesChoice == "make hexgrid" :
-                createSampleSheet = False
+            createSampleSheet = False
+            sampleCount = 1
         else :
-                createSampleSheet = True
+            createSampleSheet = True
+            
+        match sizeChoice : 
+            case "width" :
+                targetApothem = math.ceil(size / 2.0)
+            case "apothem" :
+                targetApothem = size
+            case "radius" :
+                targetApothem = round( 3 * size / (2 * trueRatio) )
+            case "lines spacing" :
+                targetApothem = round(size / trueRatio)
         
         if selectedColor == "black" :
             fgColor = Gimp.color_parse_name("black") 
         
-        if createHexagons == True :
-                monImage.undo_group_start()
         
-        trueRatio = math.sqrt(3.0)
+        if snapFilterOn == False :
+            threshold = 2
         
-        marginXprime += strokeWidth // 2  # division with floor
-        marginYprime += strokeWidth // 2
+        threshold = 1.0 / threshold  # threshold of difference in separation from perfect grid
+        
+        marginH += strokeWidth // 2  # division with floor
+        marginV += strokeWidth // 2
         
         if orientation == 'horizontal' :
-                direction = 'horizontal'
-                marginX = marginXprime
-                marginY = marginYprime
+            direction = 'horizontal' #???
+            marginX = marginH
+            marginY = marginV
 
         else :
-                direction = 'vertical'
-                marginX = marginYprime
-                marginY = marginXprime
+            direction = 'vertical'
+            marginX = marginV
+            marginY = marginH
                 
         # end if
-        
-        # upperWidth and lowerWidth checked and set to conform values-----------------
-        
-        lowerWidth = math.ceil(lowerWidth / 2.0) * 2.0
-        upperWidth = math.floor(upperWidth / 2.0) * 2.0
-        
-        if upperWidth == 0 :
-                upperWidth = lowerWidth
-        
-        if upperWidth < lowerWidth :
-
-                exchangeBuffer = upperWidth
-                upperWidth = lowerWidth
-                lowerWidth = exchangeBuffer
-                
-        # print(lowerWidth) # debug
-        # print(upperWidth) # debug
-        
-        # correct sampleCount if it exceeds the number of possible apothem values-----
-        
-        sampleCount = min( (upperWidth - lowerWidth) / 2 + 1, sampleCount )
         
         # check stroke width parity---------------------------------------------------
         
@@ -350,42 +326,51 @@ class hexaGrid (Gimp.PlugIn):
         # end initialisations
         #-----------------------------------------------------------------------------
         
-        # Recherche nombres magiques--------------------------------------------------
+        # Search magic numbers--------------------------------------------------------
         
-        sampleList = sampleSearch(lowerWidth, upperWidth, trueRatio)
+        # print("Sample count:", sampleCount) # debug
         
+        if allowStretch == True :
+            
+            sampleList = sampleSearchThres(targetApothem, threshold, sampleCount, trueRatio)
+            
+        else :
+            
+            sampleList = sampleSearchInterv(targetApothem, sampleCount, trueRatio)
+            
+        # print(sampleList) # debug
 
         #-----------------------------------------------------------------------------
         
-        # Initialisations phase création----------------------------------------------
+        # Creation phase initialisations----------------------------------------------
         
         if createLayer == False and createSampleSheet == False :
                 
-                imageXprime = calqueSource.get_width()
-                imageYprime = calqueSource.get_height()
+                imageH = calqueSource.get_width()
+                imageV = calqueSource.get_height()
                 baseLayerOffset = calqueSource.get_offsets() # exception: the first element is the boolean!!
-                baseLayerOffsetXprime = baseLayerOffset[1]
-                baseLayerOffsetYprime = baseLayerOffset[2]
+                baseLayerOffsetH = baseLayerOffset[1]
+                baseLayerOffsetV = baseLayerOffset[2]
                 
         else :
-                imageXprime = monImage.get_width()
-                imageYprime = monImage.get_height()
-                baseLayerOffsetXprime = 0
-                baseLayerOffsetYprime = 0
+                imageH = monImage.get_width()
+                imageV = monImage.get_height()
+                baseLayerOffsetH = 0
+                baseLayerOffsetV = 0
         
         if direction == 'horizontal' :
                 
-                imageX = imageXprime
-                imageY = imageYprime
-                baseLayerOffsetX = baseLayerOffsetXprime
-                baseLayerOffsetY = baseLayerOffsetYprime
+                imageX = imageH
+                imageY = imageV
+                baseLayerOffsetX = baseLayerOffsetH
+                baseLayerOffsetY = baseLayerOffsetV
                 
         else :
                 
-                imageX = imageYprime
-                imageY = imageXprime
-                baseLayerOffsetX = baseLayerOffsetYprime
-                baseLayerOffsetY = baseLayerOffsetXprime
+                imageX = imageV
+                imageY = imageH
+                baseLayerOffsetX = baseLayerOffsetV
+                baseLayerOffsetY = baseLayerOffsetH
                 
         # end if
         
@@ -394,14 +379,10 @@ class hexaGrid (Gimp.PlugIn):
         
         #-----------------------------------------------------------------------------
         
-        # phase création--------------------------------------------------------------
+        # Creation phase--------------------------------------------------------------
         
-        
-        curatedSampleList = []
         
         if createSampleSheet == True :
-            
-            # print("yes") # debug
             
             Gimp.Selection.none(monImage)
             createLayer = True
@@ -411,48 +392,57 @@ class hexaGrid (Gimp.PlugIn):
             marginX = strokeWidth // 2
             marginY = strokeWidth // 2
             
-            layerGroup = Gimp.GroupLayer.new(monImage, "Samples sheet #1") # ajouter plus de détails au nom?
+            # prepare grid dimensions
+            gridLineWidth = strokeWidth + 2 #(strokeWidth // 2) * 2 + 2 # ensure it's even
+            gridLineOffset = 0 # -1 * (gridLineWidth // 2)
+            
+            layerGroup = Gimp.GroupLayer.new(monImage, "Samples sheet #1") # add more details to the name?
             monImage.insert_layer(layerGroup, None, 0)
             
             # determine best filling of squares :
-            cellSize, nrows, ncols = squareFill(imageXprime, imageYprime, sampleCount)
+            cellSize, nrows, ncols = squareFill(imageH - gridLineWidth, imageV - gridLineWidth, sampleCount)
+            
+            # stretch the squares for better fill
+            cellSizeH, cellSizeV = stretchSquares(imageH - gridLineWidth, imageV - gridLineWidth, cellSize, nrows, ncols)
+            
+            if direction == 'horizontal' :
+                cellSizeX = cellSizeH
+                cellSizeY = cellSizeV
+            else :
+                cellSizeX = cellSizeV
+                cellSizeY = cellSizeH
             
             # insert background white layer
-            bgLayer = Gimp.Layer.new(   monImage, None, cellSize * ncols, cellSize * nrows, 
+            bgroundH = cellSizeH * ncols + gridLineWidth
+            bgroundV = cellSizeV * nrows + gridLineWidth
+            # bgLayer = Gimp.Layer.new(   monImage, None, cellSizeH * ncols, cellSizeV * nrows, 
+                                        # 1, 100.0, Gimp.LayerMode.NORMAL)
+            bgLayer = Gimp.Layer.new(   monImage, None, bgroundH, bgroundV, 
                                         1, 100.0, Gimp.LayerMode.NORMAL)
             monImage.insert_layer(bgLayer, layerGroup, 1)
             bgLayer.fill(3)   # white
             
-            # iterate over samples
             i = 0
             
-            while i < sampleCount :
+            for thisElement in sampleList :
                 
-                curatedSampleList.append(sampleList[i])
-                
-                i += 1
-                
-            curatedSampleList.sort(key=byApothem)
-            
-            # end while
-            
-            i = 0
-            
-            for thisElement in curatedSampleList :
-                
+                # suggestion for congruence:    snap: accuracy (fidélité), convergence, evenness, symmetry, divergence, uniformity, pixel-shift
+                #                               non-snap: congruence, convergence, accordance, divergence, tolerance, pixel-shift (lines)
                 apothem =       thisElement["apothem"]
                 radius =        thisElement["radius"]
                 separation =    thisElement["separation"]
-                quality =       thisElement["quality"]
-                apoStretch =    thisElement["apoStretch"]
+                congruence =    thisElement["congruence"] 
+                gridStretch =   thisElement["gridStretch"]
+                delta =         thisElement["delta"]
                 
-                offsetX = (i % ncols) * cellSize
-                offsetY = (i // ncols ) * cellSize
+                offsetX = (i % ncols) * cellSizeH + gridLineWidth // 2
+                offsetY = (i // ncols ) * cellSizeV + gridLineWidth // 2
                 
-                buildHexagons(  monImage, calqueSource, cellSize, cellSize, baseLayerOffsetX, baseLayerOffsetY, 
-                                offsetX, offsetY, marginX, marginY, direction, apothem, radius, separation, 
-                                halfPixel, quality, apoStretch, createLayer, cropLayer, strokePath, 
-                                strokeWidth, fgColor, adjustGrid, layerGroup, True, keepPaths)
+                buildHexagons(  monImage, calqueSource, cellSizeX, cellSizeY, baseLayerOffsetX, baseLayerOffsetY, 
+                                offsetX, offsetY, marginX, marginY, direction, apothem, radius, 
+                                separation, allowStretch, halfPixel, congruence, delta, gridStretch, 
+                                createLayer, strokePath, strokeWidth, fgColor, adjustGrid, 
+                                layerGroup, True, keepPaths, verbose)
                 
                 i += 1
                 
@@ -462,25 +452,31 @@ class hexaGrid (Gimp.PlugIn):
             sampleLayer = layerGroup.merge()
             
             # decorate with grid
-            
             grid = Gimp.DrawableFilter.new(sampleLayer, "gegl:grid", "")
             grid_config = grid.get_config()
-            grid_config.set_property("x", cellSize)
-            grid_config.set_property("y", cellSize)
-            grid_config.set_property("x-offset", -strokeWidth)
-            grid_config.set_property("y-offset", -strokeWidth)
-            grid_config.set_property("line-width", 2 * strokeWidth)
-            grid_config.set_property("line-height", 2 * strokeWidth)
+            grid_config.set_property("x", cellSizeH)
+            grid_config.set_property("y", cellSizeV)
+            grid_config.set_property("x-offset", gridLineOffset)
+            grid_config.set_property("y-offset", gridLineOffset)
+            grid_config.set_property("line-width", gridLineWidth)
+            grid_config.set_property("line-height", gridLineWidth)
             grid_config.set_property("line-color", Gegl.Color.new('black'))
             sampleLayer.merge_filter(grid)
             
+            # center the samples layer
+            layerPushH = (imageH - bgroundH) // 2
+            layerPushV = (imageV - bgroundV) // 2
+            sampleLayer.set_offsets(layerPushH, layerPushV)
             
+            # flatten and extend to image size
+            backgroundcolor = Gimp.color_parse_css("rgb(255, 255, 255)")
+            Gimp.context_set_background(backgroundcolor)
+            sampleLayer.flatten()
+            sampleLayer.resize_to_image_size()
             
-        else :
+        else : # createSampleSheet == False
             
             layerGroup = None
-            
-            # curatedSampleList.append(sampleList[0]) # pas nécessaire
             
             thisElement = sampleList[0]
             offsetX = 0
@@ -489,93 +485,213 @@ class hexaGrid (Gimp.PlugIn):
             apothem =       thisElement["apothem"]
             radius =        thisElement["radius"]
             separation =    thisElement["separation"]
-            quality =       thisElement["quality"]
-            apoStretch =    thisElement["apoStretch"]
+            congruence =    thisElement["congruence"]
+            gridStretch =   thisElement["gridStretch"]
+            delta =  thisElement["delta"]
             
             buildHexagons(  monImage, calqueSource, imageX, imageY, baseLayerOffsetX, baseLayerOffsetY, 
-                            offsetX, offsetY, marginX, marginY, direction, apothem, radius, separation, 
-                            halfPixel, quality, apoStretch, createLayer, cropLayer, strokePath, 
-                            strokeWidth, fgColor, adjustGrid, layerGroup, False, keepPaths)
+                            offsetX, offsetY, marginX, marginY, direction, apothem, radius, 
+                            separation, allowStretch, halfPixel, congruence, delta, gridStretch, 
+                            createLayer, strokePath, strokeWidth, fgColor, adjustGrid, 
+                            layerGroup, False, keepPaths, verbose)
             
         # end if createSampleSheet
-        
         
         #-----------------------------------------------------------------------------
         
         #----------------------
         # End of main procedure
         #----------------------
-
-        monImage.thaw_layers()
-        monImage.thaw_paths()
-        monImage.undo_group_end() # à faire: tester si undo possible
+        
+        # print(selectedLayer[0]) # debug
+        
+        monImage.undo_group_end()
+        
         Gimp.context_pop()
+        
+        # make current layer active
+        
+        monImage.set_selected_layers([calqueSource])
+        
+        if createLayer == True :
+            
+            monImage.thaw_paths()
+            monImage.thaw_layers()
+            selectedLayer = monImage.get_layers()[0]
+            # monImage.set_selected_layers([calqueSource])    # bug workaround : without this line, and in 
+                                                              # presence of freeze/thaw, no layer is selected!
+            monImage.set_selected_layers([selectedLayer])
+            
+            
+        
         
         return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
         
 #*************************************************************************************
 
 
-def sampleSearch(lowerWidth, upperWidth, trueRatio) :
+def stretchSquares(imageH, imageV, cellSize, nrows, ncols) :
+    
+    # determine in which direction we can stetch
+    extentH = cellSize * ncols
+    extentV = cellSize * nrows
+    pixLeftH = imageH - extentH
+    pixLeftV = imageV - extentV
+    
+    if pixLeftH > pixLeftV and pixLeftH > ncols : # we can add some pixels horizontally
+        
+        addedPixH = pixLeftH // ncols
+        cellSizeH = cellSize + addedPixH
+        cellSizeV = cellSize
+        
+    elif pixLeftV > pixLeftH and pixLeftV > nrows : # we can add some pixels vertically
+        
+        addedPixV = pixLeftV // nrows
+        cellSizeV = cellSize + addedPixV
+        cellSizeH = cellSize
+        
+    else :
+        
+        cellSizeH = cellSize
+        cellSizeV = cellSize
+    
+    return cellSizeH, cellSizeV
 
-    # -------------------------------------------
-    # search of multiple samples of magic numbers
-    # -------------------------------------------
+
+#*************************************************************************************
+
+
+def sampleSearchInterv(targetApothem, sampleCount, trueRatio) :
+
+    # used if allowStretch is false
+
+    # Initialisations-----------------------------------------------------------------
     
-    # Initialisations-------------------------------------------------------------
+    minApothem = 2
     
-    lowerApothem = int((lowerWidth + 1) / 2.0)
-    upperApothem = int(upperWidth / 2.0)
+    lowerApothem = max(minApothem, targetApothem - int(sampleCount / 2.0))
+    upperApothem = lowerApothem + sampleCount - 1
     currentApothem = lowerApothem
     sampleList = []
     
-    # boucle de calcul de tous les delta------------------------------------------
+    # calculate all the deltas--------------------------------------------------------
     
     while currentApothem <= upperApothem : 
         
-        trueSeparation = currentApothem * trueRatio
-        separation = round(trueSeparation) # Séparation entre lignes d'hexas. Hauteur du rectangle de grille
-        apoStretch = trueSeparation / separation # trick: it's the inverse of stretch in separation (Y) direction!
-        delta = abs( 2 * currentApothem * (apoStretch - 1.0) ) # OK, verified graphically
+        separation = currentApothem * trueRatio # separation between hexas lines, height of the grid rectangle
+        delta = abs(round(separation) - separation)
+        gridStretch = 0.0 #
+        
+        # congruence :
+        congruence = 1.0 / delta
+
         radius = separation / 3.0 * 2.0
         
-        # quality :
-        quality = 1.0 / delta # number of contiguous hexs to deviate 1px
-        
         sampleList.append( {"apothem":currentApothem, "delta":delta, 
+                            "delta":delta,
                             "separation":separation, "radius":radius,
-                            "quality":quality, "apoStretch":apoStretch} )
-        
-        # print(quality)    # debug
-        # print(apoStretch) # debug
-        # print(delta)      # debug
+                            "congruence":congruence, "gridStretch":gridStretch} )
         
         currentApothem +=1
     
     # end while
     
-    # tri de la liste complète----------------------------------------------------
+    # print(sampleList) # debug
     
-    sampleList.sort(key=byDelta)
+    #---------------------------------------------------------------------------------
+    
+    return sampleList
+    
+#*************************************************************************************
+
+def sampleSearchThres(targetApothem, threshold, sampleCount, trueRatio) :
+    
+    # -------------------------------------------
+    # search of multiple samples of magic numbers
+    # -------------------------------------------
+    
+    # used if allowStretch is true
+    
+    # Initialisations-----------------------------------------------------------------
+    
+    minApothem = 2
+    inc = 0.5           # increment to add and subtract alternatively to target Apothem
+    toggle = 1         # alternatively 1 and -1
+    sampleList = []
+    
+    # calculate all the deltas--------------------------------------------------------
+    
+    while sampleCount > 0 : 
+        
+        currentApothem = targetApothem + toggle * int(inc)
+        
+        trueSeparation = currentApothem * trueRatio
+        
+        separation = round(trueSeparation) # separation between hexas lines, height of the grid rectangle
+        delta = separation - trueSeparation
+        
+        if abs(delta) <= threshold and currentApothem >= minApothem :
+            
+            if sampleCount == 1 and toggle == -1 and threshold < 0.5 :  # if last pass is lower apothem
+                
+                # we examine the symetric higer apothem to see if it's better
+                currentApothem1 = targetApothem + int(inc)
+                trueSeparation1 = currentApothem1 * trueRatio
+                separation1 = round(trueSeparation1)
+                delta1 = separation1 - trueSeparation1
+                
+                if abs(delta1) < abs(delta) :
+                    
+                    currentApothem = currentApothem1
+                    trueSeparation = trueSeparation1
+                    separation = separation1
+                    delta = delta1
+            
+            # end if sampleCount...
+            
+            # congruence :
+            congruence = 1.0 / abs(delta) # number of contiguous hexs to deviate 1px, changed since 0.16
+            radius = separation / 3.0 * 2.0
+            gridStretch = trueSeparation / separation #
+            
+            sampleList.append( {"apothem":currentApothem, "delta":delta, 
+                                "delta":delta,
+                                "separation":separation, "radius":radius,
+                                "congruence":congruence, "gridStretch":gridStretch} )
+            sampleCount -= 1
+            
+        # end if abs(delta)...
+        
+        inc += 0.5
+        toggle *= -1
+        
+    # end while
+    
+    # sort full list------------------------------------------------------------------
+    
+    sampleList.sort(key=byApothem)
     
     # print(sampleList) # debug
     
     #-----------------------------------------------------------------------------
     
     return sampleList
+
     
 #*************************************************************************************
 
 
-def byDelta(e) :
+def byDelta(e) : # currently unused
     return e["delta"]
     
+
 #*************************************************************************************
 
     
 def byApothem(e) :
     return e["apothem"]
     
+
 #*************************************************************************************
 
 
@@ -624,12 +740,33 @@ def squareFill(x, y, n) : # from stackexchange question 466198
 #*************************************************************************************
 
 
-def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLayerOffsetY, 
-                    offsetXprime, offsetYprime, marginX, marginY, direction, apothem, radius, 
-                    separation, halfPixel, quality, apoStretch, createLayer, cropLayer, strokePath, 
-                    strokeWidth, fgColor, adjustGrid, layerGroup, isSample, keepPaths):
+def countHexagons( dimX, dimY, marginX, marginY, apothem, separation ):
+
+    # count contiguous hexas and lines
     
-    # This function has become a monster, restructuring ahead...
+    countY = int( (dimY - 2.0 * marginY - 1.0 / 3.0 * separation) / separation )
+    
+    if countY > 1 :  # add an apothem to take into account the offset of even lines
+        countX = int( (dimX - 2.0 * marginX - apothem) / (2.0 * apothem) )
+        
+    else : # countY == 1 or 0
+        countX = int( (dimX - 2.0 * marginX) / (2.0 * apothem) )
+        
+    # end if
+    
+    return countX, countY
+
+
+#*************************************************************************************
+
+
+def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLayerOffsetY, 
+                    offsetH, offsetV, marginX, marginY, direction, apothem, radius, 
+                    separation, allowStretch, halfPixel, congruence, delta, gridStretch, 
+                    createLayer, strokePath, strokeWidth, fgColor, adjustGrid, 
+                    layerGroup, isSample, keepPaths, verbose):
+    
+    # This function could use some restructuring...
     
     # ***************************************
     # Hexagons counting, building and drawing
@@ -639,26 +776,16 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
     
     # initialisations-----------------------------------------------------------------
     
-    # fontScale = 1.0       # voir plus bas
-    offsetX = offsetXprime
-    offsetY = offsetYprime
+    offsetX = offsetH
+    offsetY = offsetV
     
     if isSample == True :
-        marginX -= int(apothem * 1.5)
+        pageMarginX = marginX
+        pageMarginY = marginY
+        marginX -= int(apothem * 1.5) # à vérifier
         marginY -= int(apothem * 1.5)
     
-    
-    # décompte des hexas contigus et des lignes---------------------------------------
-    
-    countY = int( (dimY - 2.0 * marginY - 1.0 / 3.0 * separation) / separation )
-    
-    if countY > 1 :  # ajouter un apothem pour tenir compte du décalage des lignes paires
-        countX = int( (dimX - 2.0 * marginX - apothem) / (2.0 * apothem) )
-        
-    else : # countY == 1 or 0
-        countX = int( (dimX - 2.0 * marginX) / (2.0 * apothem) )
-        
-    # end if
+    countX, countY = countHexagons(dimX, dimY, marginX, marginY, apothem, separation)
     
     if countX == 0 or countY == 0 :
         Gimp.message_set_handler(2)
@@ -666,86 +793,121 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
                     "px wide hexagon.\nTry with a smaller range or a bigger image")
         return(False)
     
-    # print(str(countX) + "\n" + str(countY)) # debug
-    
+    # print("count:" + str(countX) + "x" + str(countY)) # debug
     
     # title of path and layer---------------------------------------------------------
     
-    dApoStretch = (apoStretch - 1.0) * 100   # delta of stretch for apothem direction, in %
-    rndStretch = 0 - int(math.floor(math.log10(abs(dApoStretch)))) # chiffres significatifs (-1)
-    
-    if dApoStretch < 0 :
-        dApoSign = "-"
-    else :
-        dApoSign = "+"
-    
-    if direction == 'horizontal' :
+    if allowStretch == True :
+        
+        dgridStretch = (1.0 - gridStretch) * 100   # delta of stretch for grid height direction, in %
+        rndStretch = 0 - int(math.floor(math.log10(abs(dgridStretch)))) # decimal places minus 1
+        
+        if dgridStretch < 0 :
+            dStretchSign = "-"
+        else :
+            dStretchSign = "+"
+            
+        rndDelta = 1 - int(math.floor(math.log10(abs(delta)))) # decimal places minus 1
+        
+        if direction == 'horizontal' :
+            
+            gridXY = str( int(apothem) ) + "x" + str( int(separation) )
+            countXY = str(countX) + "x" + str(countY)
+            
+        else :
+            
+            gridXY = str( int(separation) ) + "x" + str( int(apothem) ) 
+            countXY = str(countY) + "x" + str(countX)
+        
+        if verbose :
+            vectorName = (
+                    _("W:") + str( int(apothem * 2) ) +
+                    _(" grid:") + gridXY +
+                    _(" accur:") + str( int(round(congruence)) ) +
+                    _(" str:") + dStretchSign + str( round(abs(dgridStretch), rndStretch) ) + "%" +
+                    # _(" snap:") + str( round(delta, rndDelta) ) +
+                    _(" count:") + countXY
+                    )
+        else :
+            vectorName = (
+                    _("W:") + str( int(apothem * 2) ) +
+                    _(" grid:") + gridXY +
+                    _(" accur:") + str( int(round(congruence)) )
+                    )
+            
+    else : # allowStretch == False
+        
+        delta = 0.0
+        rndStretch = 2
+        dgridStretch = 0.0
+        dStretchSign = ""
+        
+        if direction == 'horizontal' :
+            
+            gridXY = str( int(apothem) ) + "x" + str( round(separation, 2) )
+            countXY = str(countX) + "x" + str(countY)
+            
+        else :
+            
+            gridXY = str( round(separation, 2) ) + "x" + str( int(apothem) )
+            countXY = str(countY) + "x" + str(countX)
+            
+        if verbose :
             
             vectorName = (
-                    _("Wdth:") + str( int(2 * apothem) ) +
-                    _(" Qual:") + str( int(round(quality)) ) +
-                    "/" + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%" +
-                    _(" Grid:") + str( int(apothem) ) + "x" + str( int(separation) ) 
-                    # " R:" + str( int(round(radius)) ) # removed
+                    _("W:") + str( int(apothem * 2) ) +
+                    _(" grid:") + gridXY +
+                    _(" radius:") + str( round(radius, 1) ) +
+                    _(" count:") + countXY
                     )
-                    
-    else :
-            
+        else :
             vectorName = (
-                    _("Wdth:") + str( int(2 * apothem) ) +
-                    _(" Qual:") + str( int(round(quality)) ) +
-                    "/" + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%" +
-                    _(" Grid:") + str( int(separation) ) + "x" + str( int(apothem) ) 
-                    # " R:" + str( int(round(radius)) ) # removed
+                    _("W:") + str( int(apothem * 2) ) +
+                    _(" grid:") + gridXY
                     )
     
-    # end if
+    # end if allowStretch
     
     layerName = vectorName
     
     
     #---------------------------------------------------------------------------------
     
-    # Créer un calque
+    # Create a new layer
     # ---------------
     
     if createLayer == True :
+        
+        newLayerX = dimX
+        newLayerY = dimY
+        
+        layerOffsetX = math.floor( (dimX - newLayerX) / 2.0 + halfPixel )
+        layerOffsetY = math.floor( (dimY - newLayerY) / 2.0 + halfPixel )
+        
+        layerType = calqueSource.type_with_alpha()
+        
+        if direction == 'horizontal' :
             
-            if countY == 1 and isSample == False and cropLayer == True :
-                newLayerX = int( 2 * countX * apothem + 2 * marginX + 2 * halfPixel)
-                newLayerY = (countY - 1) * separation + 2 * round(2.0 / 3.0 * separation) + 2 * marginY + 2 * halfPixel
-                
-            elif countY > 1 and isSample == False and cropLayer == True : # tenir compte du décalage des lignes paires
-                newLayerX = int( (2 * countX + 1) * apothem + 2 * marginX + 2 * halfPixel)
-                newLayerY = (countY - 1) * separation + 2 * round(2.0 / 3.0 * separation) + 2 * marginY + 2 * halfPixel
+            newLayer = Gimp.Layer.new(  monImage, layerName, newLayerX, newLayerY, 
+                                        layerType, 100, Gimp.LayerMode.NORMAL)
+            newLayer.set_offsets(layerOffsetX + offsetH, layerOffsetY + offsetV)
+            # offsetH, offsetV: samples offsets
             
-            else : # isSample == True or cropLayer == False
-                newLayerX = dimX
-                newLayerY = dimY
+        else :
+            newLayer = Gimp.Layer.new(  monImage, layerName, newLayerY, newLayerX, 
+                                        layerType, 100, Gimp.LayerMode.NORMAL)
+            newLayer.set_offsets(layerOffsetY + offsetH, layerOffsetX + offsetV)
+            # offsetH, offsetV: samples offsets
+        
+        # end if
+        
+        monImage.insert_layer(newLayer, layerGroup, 0)
+        
+        # selectedLayer = newLayer
+        
+    # else : 
             
-            # end if
-            
-            layerOffsetX = math.floor( (dimX - newLayerX) / 2.0 + halfPixel )
-            layerOffsetY = math.floor( (dimY - newLayerY) / 2.0 + halfPixel )
-            
-            layerType = calqueSource.type_with_alpha()
-            
-            if direction == 'horizontal' :
-                    
-                    newLayer = Gimp.Layer.new(  monImage, layerName, newLayerX, newLayerY, 
-                                                layerType, 100, Gimp.LayerMode.NORMAL)
-                    newLayer.set_offsets(layerOffsetX + offsetXprime, layerOffsetY + offsetYprime)
-                    # offsetXprime, offsetYprime: samples offsets
-                    
-            else :
-                    newLayer = Gimp.Layer.new(  monImage, layerName, newLayerY, newLayerX, 
-                                                layerType, 100, Gimp.LayerMode.NORMAL)
-                    newLayer.set_offsets(layerOffsetY + offsetXprime, layerOffsetX + offsetYprime)
-                    # offsetXprime, offsetYprime: samples offsets
-            
-            # end if
-            
-            monImage.insert_layer(newLayer, layerGroup, 0)
+        # selectedLayer = calqueSource
             
     # end if createLayer
     
@@ -754,31 +916,33 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
     # Construction
     # ------------
     
-    # offsets : coordonnées du premier centre d'hexagone
+    # offsets : coordinates of the first hexagon center
     
     if isSample == True and direction == 'vertical' :
-        offsetX = offsetYprime
-        offsetY = offsetXprime
+        offsetX = offsetV
+        offsetY = offsetH
     
-    if countY == 1 and isSample == False :
-        pathOffsetX = ( math.floor( ( dimX - apothem * countX * 2 ) / 2.0 ) 
-                        + halfPixel + baseLayerOffsetX )
-        pathOffsetY = ( math.floor( ( dimY - separation * (countY - 1) ) / 2.0 ) 
-                        + halfPixel + baseLayerOffsetY )
+    totalOffsetX = baseLayerOffsetX
+    totalOffsetY = baseLayerOffsetY
+    
+    if isSample == True :
+        totalOffsetX += offsetX
+        totalOffsetY += offsetY
         
-    elif countY > 1 and isSample == False : # tenir compte du décalage des lignes paires
-        pathOffsetX = ( math.floor( ( dimX - apothem * (countX * 2 + 1) ) / 2.0 ) 
-                        + halfPixel + baseLayerOffsetX )
-        pathOffsetY = ( math.floor( ( dimY - separation * (countY - 1) ) / 2.0 ) 
-                        + halfPixel + baseLayerOffsetY )
+    pathOffsetX = 0.5 * dimX - apothem * countX + totalOffsetX
+    pathOffsetY = 0.5 * ( dimY - separation * (countY - 1) ) + totalOffsetY
     
-    else : 
-        pathOffsetX = ( math.floor( ( dimX - apothem * (countX * 2 + 1) ) / 2.0 ) 
-                        + halfPixel + offsetX + baseLayerOffsetX )
-        pathOffsetY = ( math.floor( ( dimY - separation * (countY - 1) ) / 2.0 ) 
-                        + halfPixel + offsetY + baseLayerOffsetY )
-
-    # vecteurs de position des sommets depuis le centre
+    if countY > 1 or isSample == True : # take even lines offset into account
+        pathOffsetX -= 0.5 * apothem
+    
+    pathOffsetX = math.floor(pathOffsetX) + halfPixel
+    
+    if allowStretch == True :
+        pathOffsetY = math.floor(pathOffsetY)
+    
+    pathOffsetY += halfPixel
+    
+    # vectors from center to vertices
     
     if direction == 'horizontal' :
             
@@ -800,35 +964,35 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
     
     # end if
     
-    # création du vecteur vide
+    # empty path creation
     
     hexgrid = Gimp.Path.new(monImage, vectorName)
     
     
-    # Itération dessin----------------------------------------------------------------
+    # Build iteration-----------------------------------------------------------------
     
     i = 0
     while i < countY :
             
-            centerYprime = i * separation + pathOffsetY
+            centerV = i * separation + pathOffsetY
             lineParity = i % 2
             startX = apothem * (lineParity + 1.0)
             
             j = 0
             while j < countX :
                     
-                    centerXprime = 2.0 * apothem * j + startX + pathOffsetX
+                    centerH = 2.0 * apothem * j + startX + pathOffsetX
                     
                     
                     if direction == 'horizontal' :
                             
-                            centerX = centerXprime
-                            centerY = centerYprime
+                            centerX = centerH
+                            centerY = centerV
                             
                     else :
                             
-                            centerX = centerYprime
-                            centerY = centerXprime
+                            centerX = centerV
+                            centerY = centerH
                             
                     
                     # on dessine un hexagone
@@ -881,12 +1045,12 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
     # Finalisations
     #---------------
     
-    # important: insérer le vecteur seulement lorsqu'il est complet!!!
+    # important: only insert the path when it's complete
     
     monImage.insert_path(hexgrid, None, 0)
     
     
-    # dessiner les chemin-------------------------------------------------------------
+    # stroke the path-----------------------------------------------------------------
     
     if strokePath == True :
             
@@ -911,7 +1075,7 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
         
         monImage.remove_path(hexgrid)
     
-    # adapter la grille---------------------------------------------------------------
+    # set the image grid---------------------------------------------------------------
     
     if adjustGrid == True :
             
@@ -929,31 +1093,83 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
                     
             # end if
             
-            # display image grid: apparently not possible with the API
-            # would be useful to confirm user choice
+            # display image grid: currently not possible with the API?
+            # would be useful for user choice confirmation
             
     # end if
     
     # info-text layer-----------------------------------------------------------------
     
     if isSample == True :
-            
-        sampleText = (
-                    _("width  :") + str( int(2 * apothem) ) + "\n" +
-                    _("stretch:") + dApoSign + str( round(abs(dApoStretch), rndStretch) ) + "%\n" +
-                    _("quality:") + str( int(round(quality)) ) 
-                    )
         
-        # configure text layer
-        fontScale = 24.0 # relative scaling
-        fontSize = fontScale * dimX / 500.0 + 6.0 # unit px
-        textOffsetX = offsetXprime + int(0.5 * math.sqrt(dimX)) + strokeWidth
-        textOffsetY = offsetYprime + int(0.5 * math.sqrt(dimX)) + strokeWidth
+        imageH = monImage.get_width()
+        imageV = monImage.get_height()
+        
+        if direction == 'horizontal' :
+            
+            dirStretch = _("v stretch:")
+            totalCountH, totalCountV = countHexagons(imageH, imageV, 
+                                                    pageMarginX, pageMarginY, apothem, separation)
+            
+        else : 
+            
+            dirStretch = _("h stretch:")
+            totalCountV, totalCountH = countHexagons(imageV, imageH, 
+                                                    pageMarginY, pageMarginX, apothem, separation)
+            
+        # end if direction
+        
+        sampleText = _(" width/apo: ") + str( int(2 * apothem) ) + "/" + str( int(apothem) ) + "px"
+        
+        if allowStretch == True :
+            
+            if verbose :
+                
+                sampleText = ( sampleText + "\n" +
+                            _(" spacing  : ") + str( int(separation) ) + "px\n" +
+                            " " + dirStretch + dStretchSign + str( round(abs(dgridStretch), rndStretch) ) + "%\n" +
+                            # _(" snap dist: ") + str( round(abs(delta), rndDelta ) ) + "px\n" +
+                            _(" accuracy : ") + str( round(congruence, 1) ) + "\n" +
+                            _(" count    : ") + str(totalCountH) + "x" + str(totalCountV)
+                            )
+                
+            else : # not verbose
+                
+                sampleText = ( sampleText + "\n" +
+                            _(" spacing  : ") + str( int(separation) ) + "px\n" +
+                            _(" accuracy : ") + str( round(congruence, 1) ) 
+                            )
+        
+        else : # allowStretch == False
+            
+            if verbose :
+                
+                sampleText = ( sampleText + "\n" +
+                            _(" spacing  : ") + str( round(separation, 2) ) + "px\n" +
+                            _(" radius   : ") + str( round(radius, 1) ) + "px" + "\n" +
+                            _(" count    : ") + str(totalCountH) + "x" + str(totalCountV)
+                            )
+                            
+            else : # not verbose
+                
+                sampleText = ( sampleText + "\n" +
+                            _(" spacing  : ") + str( round(separation, 2) ) + "px"
+                            )
+        
+        # end if allowStretch
+        
+        # configure the text layer
+        fontScale = 20.0         # relative scaling # default: 20
+        refDim = min(dimX, dimY) # take the smallest side as reference for font scaling
+        fontSize = fontScale * refDim / 500.0 + 6.0 # unit px
+        textOffsetX = offsetH + int(0.5 * math.sqrt(refDim)) + strokeWidth
+        textOffsetY = offsetV + int(0.5 * math.sqrt(refDim)) + strokeWidth
         font = Gimp.Font.get_by_name("Monospace Bold")
         unit = Gimp.Unit.pixel()
-        textColor = Gimp.color_parse_css("rgb(0, 89, 188)")
+        textColor       = Gimp.color_parse_css("rgb(0, 0, 0)")
+        backgroundcolor = Gimp.color_parse_css("rgb(250, 250, 225)")
         
-        # text layer
+        # create the text layer
         newTextLayer = Gimp.TextLayer.new(monImage, sampleText, font, fontSize, unit)
         newTextLayer.set_offsets(textOffsetX, textOffsetY)
         monImage.insert_layer(newTextLayer, layerGroup, 0)
@@ -961,12 +1177,15 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
         
         x = newTextLayer.get_width()
         y = newTextLayer.get_height()
-        textFrame = Gimp.Layer.new(monImage, None, x, y, 1, 65.0, Gimp.LayerMode.NORMAL)
+        textFrame = Gimp.Layer.new(monImage, None, x, y, 1, 100.0, Gimp.LayerMode.NORMAL)
         textFrame.set_offsets(textOffsetX, textOffsetY)
         monImage.insert_layer(textFrame, layerGroup, 1)
-        textFrame.fill(3)
+        Gimp.context_set_background(backgroundcolor)
+        textFrame.fill(1)
         
     # end if isSample
+    
+    return
     
 # end buildHexagons()
 
@@ -974,3 +1193,6 @@ def buildHexagons(  monImage, calqueSource, dimX, dimY, baseLayerOffsetX, baseLa
 
 
 Gimp.main(hexaGrid.__gtype__, sys.argv)
+
+
+
