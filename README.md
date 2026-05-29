@@ -129,7 +129,7 @@ Keep the path if needed for further use, like stroke option not provided by the 
 Configure the image grid to fit the centers of hexagons, and highlight the underlying rectangular grid. 
 The user still has to activate grid visibility and snap options in GIMP's menus.
 
-### Output advances parameters
+### Output advanced parameters
 
 Outputs a few more parameters in layers name (if "Create a new layer" is checked), or in sample sheet 
 overlay text. See "Outputs" below for more details.
