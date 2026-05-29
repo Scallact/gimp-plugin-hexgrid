@@ -46,16 +46,73 @@ for the search of bigger and smaller sizes.
 
 Slightly stretches the grid to ensure that the hexagons centers fit align exactly with the pixel grid. 
 The stretch applies vertically for horizontal grids and horizontally for vertical grids. This is useful 
-in many cases, for example if you need to align some stamps perfectly, or to draw geometric diagrams 
-without the headaches of inter-pixels alignments.
+in many cases, for example if you need to align some stamps perfectly, if you want to draw geometric 
+diagrams without the headaches of inter-pixels alignments, or to get nice symetrical hexagons in pixel art.
 
 *Notes*:
 
-* If an odd stroke width is entered (see below), the centers snap at the middle of pixels. If it's even, 
+* If an odd stroke width is entered, the centers snap at the middle of pixels. If it's even, 
   they snap at the pixels corners.
 * Snap "on" was the default and only possible behaviour of previous versions, up to 0.15.
 * This option doesn't guarantee that all *vertices* snap to the pixels.
 
+### Filter by accuracy:
+
+*Only for "Snap to center"*
+
+Starting with the "Size" input, searches for the closest size which matches the condition
+defined by the "Snap accuracy" parameter.
+
+Especially useful with sample sheet, where the search above and below the target "Size" value
+only outputs the results which match the condition.
+
+### Snap accuracy:
+
+*Linked to the option above*
+*Only for "Snap to center"*
+
+The **accuracy** qualifies how precisely the stretched grid and the ideal grid spacing
+align together. The largest the "accuracy", the less difference between both and the better 
+the fit.
+
+It is measured as the fraction of one pixel. For instance, if the grid spacing correction 
+between two contiguous lines is 0.2 pixel, the accuracy value is 5 ( 1/0.2 = 5 ).
+
+*Note:* The "Accuracy" equivalent parameter was named "Quality" in previous versions (up to 0.15)
+
+### Orientation:
+
+Direction of contiguous hexagon lines. **Horizontal** or **vertical**.
+
+### Vertical and horizontal margins:
+
+Minimal spacing between the grid and the layer's borders. Accepts negative values, which allow 
+to fill the layer fully with partial hexagons at the edge.
+
+*Note:* Unused for sample sheet.
+
+### Create a new layer:
+
+* Uchecked: draws on the active layer, channel or mask. The layer's dimensions are taken into account, 
+  which offers another way to enforce margins.
+* Checked: creates a new image sized layer.
+
+*Note:* Sample sheet always create a new layer.
+
+### Stroke the path:
+
+Draw the hexagonal grid on the layer. Unchecked, allows to output the path without stroking it, or even 
+create a new layer empty named with the parameters values.
+
+### Stroke width:
+
+### Stroke color:
+
+### Keep the path:
+
+### Adjust image grid:
+
+### Output advance parameters
 
 ## Installation:
 
